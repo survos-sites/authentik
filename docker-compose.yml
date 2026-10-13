@@ -25,6 +25,7 @@ x-authentik: &authentik
     - "host.containers.internal:host-gateway"
   volumes:
     - ./blueprints:/blueprints/survos:ro
+    - ./branding:/web/dist/assets/museado:ro
     - data:/data
   shm_size: 512mb
 

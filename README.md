@@ -23,6 +23,7 @@ centralized login across the Survos sites. First relying party: **zm**
 | `Procfile` | `web: server`, `worker: worker` — the two authentik processes |
 | `app.json` | Dokku healthcheck on `/-/health/live/` |
 | `blueprints/*.yaml` | one file per relying party: its OAuth2/OIDC provider + application |
+| `branding/` | Museado logo + favicon, baked into the image; `blueprints/branding.yaml` sets title "Museado Login" |
 | `docker-compose.yml` | local, on-demand stack against the local global Postgres |
 
 ### Blueprints: clients live in git

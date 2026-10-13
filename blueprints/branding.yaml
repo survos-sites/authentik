@@ -1,0 +1,15 @@
+# Museado branding on the default brand: what every user of every Survos site sees
+# when they log in. The images are baked into the image (Dockerfile COPY branding/),
+# served by authentik under /static/dist/assets/museado/. The background stays
+# authentik's stock flow_background.jpg.
+version: 1
+metadata:
+  name: Survos — branding
+entries:
+  - model: authentik_brands.brand
+    identifiers:
+      domain: authentik-default
+    attrs:
+      branding_title: Museado Login
+      branding_logo: /static/dist/assets/museado/museado-logo.png
+      branding_favicon: /static/dist/assets/museado/museado-icon.png

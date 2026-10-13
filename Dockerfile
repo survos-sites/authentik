@@ -40,6 +40,10 @@ ENV AUTHENTIK_LOG_LEVEL=info \
 # so the OIDC clients are declared in git, not clicked together in the admin.
 COPY --chown=1000:1000 blueprints/ /blueprints/survos/
 
+# Museado logo and favicon for the login pages (blueprints/branding.yaml points at
+# them). /web/dist is what authentik serves as /static/dist.
+COPY branding/ /web/dist/assets/museado/
+
 # Dokku runs the Procfile processes with this image's ENTRYPOINT
 # (`dumb-init -- ak`), so `web: server` becomes `ak server`.
 COPY Procfile /Procfile
