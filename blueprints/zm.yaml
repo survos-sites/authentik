@@ -2,7 +2,8 @@
 #
 # Two clients, so a dev callback is never a valid redirect for the prod client:
 #   zm      — the production site
-#   zm-dev  — any local *.wip host (Tac's machines, dev3 worktrees)
+#   zm-dev  — any local *.wip host (Tac's machines, dev3 worktrees) and the
+#             <machine>-zm.survos.org dev tunnels
 #
 # Symfony's side of the contract (zm config/packages/security.yaml):
 #   provider_uri  https://auth.survos.com/application/o/<slug>/
@@ -73,6 +74,10 @@ entries:
       redirect_uris:
         - matching_mode: regex
           url: '^https://[a-z0-9.-]+\.wip(:[0-9]+)?/oidc/callback$'
+          redirect_uri_type: authorization
+        # dev tunnels, <machine>-zm.survos.org (survos.org is the dev-only zone)
+        - matching_mode: regex
+          url: '^https://[a-z0-9]+-zm\.survos\.org/oidc/callback$'
           redirect_uri_type: authorization
         - matching_mode: regex
           url: '^https://[a-z0-9.-]+\.wip(:[0-9]+)?/.*$'
