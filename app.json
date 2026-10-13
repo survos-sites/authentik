@@ -1,0 +1,18 @@
+{
+  "name": "authentik",
+  "description": "Self-hosted authentik: the Survos identity provider. OpenID Connect login for zm and, later, the other Survos sites. Deployed at auth.survos.com.",
+  "keywords": ["authentik", "sso", "oidc", "identity"],
+  "website": "https://auth.survos.com",
+  "healthchecks": {
+    "web": [
+      {
+        "type": "startup",
+        "name": "live",
+        "path": "/-/health/live/",
+        "port": 9000,
+        "attempts": 30,
+        "wait": 5
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+# Shared by every Survos relying party; the per-app blueprints apply this one
+# first (authentik_blueprints.metaapplyblueprint).
+version: 1
+metadata:
+  name: Survos — common
+entries:
+  # authentik's stock `email` mapping always says email_verified: false, since
+  # it keeps no per-user verified flag. Ours vouches for the address: users
+  # here are created by an admin (no self-enrollment flow exists). Relying
+  # parties link a pre-existing local account by email ONLY when this is true.
+  # ⚠️ Adding self-enrollment without an email-verification stage makes this a
+  # lie, and lets anyone claim an existing account in every app — fix the
+  # expression before enabling one.
+  - model: authentik_providers_oauth2.scopemapping
+    id: survos-email
+    identifiers:
+      managed: survos/oauth2/scope-email
+    attrs:
+      name: "Survos OAuth Mapping: OpenID 'email' (verified)"
+      scope_name: email
+      description: "Email address"
+      expression: |
+        return {
+            "email": request.user.email,
+            "email_verified": bool(request.user.email),
+        }

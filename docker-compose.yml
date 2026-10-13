@@ -1,0 +1,42 @@
+# LOCAL dev stack only. Prod (Dokku) does NOT use this file — there the same
+# Dockerfile runs as two Procfile processes (web + worker) against survos_pg.
+#
+# ON DEMAND. authentik runs at https://auth.survos.com and local apps (zm-dev
+# client) should log in against that. Start this only to try a new authentik
+# version or to iterate on a blueprint:
+#
+#     podman compose -f ~/sites/authentik/docker-compose.yml up -d
+#     open http://localhost:9000/if/flow/initial-setup/
+#
+# Database: the local global Postgres from ~/sites/docker (survos_postgres,
+# port 5434), never a Postgres of its own. Create it once:
+#     createdb -h 127.0.0.1 -p 5434 -U postgres authentik
+
+x-authentik: &authentik
+  build: .
+  restart: "no"
+  env_file:
+    - .env
+  environment:
+    AUTHENTIK_POSTGRESQL__HOST: host.containers.internal
+    AUTHENTIK_POSTGRESQL__PORT: "5434"
+    AUTHENTIK_POSTGRESQL__USER: postgres   # local only; prod has its own role
+  extra_hosts:
+    - "host.containers.internal:host-gateway"
+  volumes:
+    - ./blueprints:/blueprints/survos:ro
+    - data:/data
+  shm_size: 512mb
+
+services:
+  server:
+    <<: *authentik
+    command: server
+    ports:
+      - "9000:9000"
+  worker:
+    <<: *authentik
+    command: worker
+
+volumes:
+  data:

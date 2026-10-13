@@ -1,0 +1,83 @@
+# zm (recordia.org) — OIDC relying party, consumed by Symfony 8.2's `oidc_login`.
+#
+# Two clients, so a dev callback is never a valid redirect for the prod client:
+#   zm      — the production site
+#   zm-dev  — any local *.wip host (Tac's machines, dev3 worktrees)
+#
+# Symfony's side of the contract (zm config/packages/security.yaml):
+#   provider_uri  https://auth.survos.com/application/o/<slug>/
+#   client_id     the client_id below
+#   check_path    /oidc/callback   (redirect URIs must match it)
+#   ID tokens     RS256 — the signing key below is REQUIRED: without one,
+#                 authentik signs with HS256 and the client secret, which
+#                 Symfony refuses outright (no HMAC for ID tokens).
+#
+# The secrets come from the authentik container's environment
+# (`dokku config:set authentik ZM_OIDC_CLIENT_SECRET=...`) and must match
+# OIDC_CLIENT_SECRET in zm's own config.
+version: 1
+metadata:
+  name: Survos — zm
+entries:
+  # the shared scope mappings every relying party uses (survos-email)
+  - model: authentik_blueprints.metaapplyblueprint
+    attrs:
+      identifiers:
+        path: survos/_common.yaml
+      required: true
+
+  - model: authentik_providers_oauth2.oauth2provider
+    id: zm-provider
+    identifiers:
+      name: zm
+    attrs:
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      client_type: confidential
+      client_id: zm
+      client_secret: !Env ZM_OIDC_CLIENT_SECRET
+      redirect_uris:
+        - matching_mode: regex
+          url: '^https://((www\.)?recordia\.org|tobacco\.survos\.com)/oidc/callback$'
+          redirect_uri_type: authorization
+        - matching_mode: regex
+          url: '^https://((www\.)?recordia\.org|tobacco\.survos\.com)/.*$'
+          redirect_uri_type: logout
+      property_mappings: &zm-scopes
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, survos/oauth2/scope-email]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
+      signing_key: &signing-key !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+  - model: authentik_core.application
+    identifiers:
+      slug: zm
+    attrs:
+      name: Recordia (zm)
+      provider: !KeyOf zm-provider
+      meta_launch_url: https://recordia.org/
+
+  - model: authentik_providers_oauth2.oauth2provider
+    id: zm-dev-provider
+    identifiers:
+      name: zm-dev
+    attrs:
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      client_type: confidential
+      client_id: zm-dev
+      client_secret: !Env ZM_DEV_OIDC_CLIENT_SECRET
+      redirect_uris:
+        - matching_mode: regex
+          url: '^https://[a-z0-9.-]+\.wip(:[0-9]+)?/oidc/callback$'
+          redirect_uri_type: authorization
+        - matching_mode: regex
+          url: '^https://[a-z0-9.-]+\.wip(:[0-9]+)?/.*$'
+          redirect_uri_type: logout
+      property_mappings: *zm-scopes
+      signing_key: *signing-key
+  - model: authentik_core.application
+    identifiers:
+      slug: zm-dev
+    attrs:
+      name: Recordia (zm, local dev)
+      provider: !KeyOf zm-dev-provider
